@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate gstreamer as gst;
 extern crate gstreamer_app as gst_app;
+
+use glib::translate::*;
 use gst::prelude::*;
 
 use gstreamer::prelude::*;
@@ -8,10 +10,42 @@ use gstreamer::GstBinExt;
 use gstreamer_video as gst_video;
 use std::error::Error;
 
-use gstnnstreamermulticam::meta::CustomMeta;
-
 const ENCODE_PIPELINE: &str =
     "videotestsrc is-live=false num-buffers=100 ! rsstreamid stream_id=32323 ! appsink name=sink";
+
+pub struct CustomMeta(imp::CustomMeta);
+
+mod imp {
+    use gst::gst_sys;
+    #[repr(C)]
+    pub struct CustomMeta {
+        parent: gst_sys::GstMeta,
+        pub(super) label: String,
+    }
+
+    extern "C" {
+        pub fn custom_meta_api_get_type() -> glib::Type;
+    }
+}
+
+unsafe impl Send for CustomMeta {}
+unsafe impl Sync for CustomMeta {}
+
+impl CustomMeta {
+    pub fn get_label(&self) -> &str {
+        self.0.label.as_str()
+    }
+}
+
+unsafe impl MetaAPI for CustomMeta {
+    type GstType = imp::CustomMeta;
+
+    fn get_meta_api() -> glib::Type {
+        unsafe { imp::custom_meta_api_get_type() }
+    }
+}
+
+type GetMetaApiFn = unsafe fn() -> glib::Type;
 
 fn build_pipeline() -> Result<(gst::Pipeline, gst_app::AppSink), Box<Error>> {
     let pipeline = gst::Pipeline::new(None);
@@ -43,7 +77,6 @@ fn handle_new_sample(appsink: &gst_app::AppSink) -> Result<gst::FlowSuccess, gst
         None => "No meta".to_string(),
         Some(meta) => format!("{}", meta.get_label()),
     };
-    let msg = 123;
     println!("{}", msg);
 
     Ok(gst::FlowSuccess::Ok)

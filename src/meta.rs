@@ -68,7 +68,7 @@ impl fmt::Debug for CustomMeta {
 }
 
 // Actual unsafe implementation of the meta.
-mod imp {
+pub mod imp {
     use glib::glib_sys;
     use glib::translate::*;
     use gst::gst_sys;
@@ -85,7 +85,8 @@ mod imp {
     }
 
     // Function to register the meta API and get a type back.
-    pub(super) fn custom_meta_api_get_type() -> glib::Type {
+    #[no_mangle]
+    pub extern "C" fn custom_meta_api_get_type() -> glib::Type {
         static TYPE: Lazy<glib::Type> = Lazy::new(|| unsafe {
             let t = from_glib(gst_sys::gst_meta_api_type_register(
                 b"MyCustomMetaAPI\0".as_ptr() as *const _,
@@ -148,7 +149,8 @@ mod imp {
     }
 
     // Register the meta itself with its functions.
-    pub(super) fn custom_meta_get_info() -> *const gst_sys::GstMetaInfo {
+    #[no_mangle]
+    pub extern "C" fn custom_meta_get_info() -> *const gst_sys::GstMetaInfo {
         struct MetaInfo(ptr::NonNull<gst_sys::GstMetaInfo>);
         unsafe impl Send for MetaInfo {}
         unsafe impl Sync for MetaInfo {}
