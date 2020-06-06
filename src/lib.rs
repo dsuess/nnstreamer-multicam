@@ -1,9 +1,11 @@
+#[macro_use]
+extern crate gstreamer as gst;
+
 use glib;
-use gstreamer as gst;
 use gstreamer_base as gst_base;
-use gstreamer_video as gst_video;
 use once_cell;
 
+pub mod meta;
 mod streamid;
 
 fn plugin_init(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {

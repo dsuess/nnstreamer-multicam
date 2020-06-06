@@ -1,9 +1,14 @@
+#[macro_use]
 extern crate gstreamer as gst;
+extern crate gstreamer_app as gst_app;
+use gst::prelude::*;
+
 use gstreamer::prelude::*;
 use gstreamer::GstBinExt;
-use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;
 use std::error::Error;
+
+use gstnnstreamermulticam::meta::CustomMeta;
 
 const ENCODE_PIPELINE: &str =
     "videotestsrc is-live=false num-buffers=100 ! rsstreamid stream_id=32323 ! appsink name=sink";
@@ -34,10 +39,11 @@ fn handle_new_sample(appsink: &gst_app::AppSink) -> Result<gst::FlowSuccess, gst
         );
         gst::FlowError::Error
     })?;
-    let msg = match buffer.get_meta::<gst_video::VideoMeta>() {
-        None => "No Meta",
-        Some(meta) => "META",
+    let msg = match buffer.get_meta::<CustomMeta>() {
+        None => "No meta".to_string(),
+        Some(meta) => format!("{}", meta.get_label()),
     };
+    let msg = 123;
     println!("{}", msg);
 
     Ok(gst::FlowSuccess::Ok)

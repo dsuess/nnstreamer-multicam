@@ -15,6 +15,8 @@ use once_cell::sync::Lazy;
 use std::i32;
 use std::sync::Mutex;
 
+use crate::meta::CustomMeta;
+
 static CAT: Lazy<gst::DebugCategory> = Lazy::new(|| {
     gst::DebugCategory::new(
         "rsstreamid",
@@ -214,13 +216,7 @@ impl BaseTransformImpl for StreamIdElement {
         let mut buf = inbuf
             .copy_region(copy_flags, 0, None)
             .expect("Couldnt create copy of inbuffer");
-        gst_video::VideoMeta::add(
-            buf.get_mut().unwrap(),
-            gst_video::VideoFrameFlags::NONE,
-            gst_video::VideoFormat::Bgra,
-            128,
-            128,
-        );
+        CustomMeta::add(buf.get_mut().unwrap(), format!("Hello"));
         Ok(PrepareOutputBufferSuccess::Buffer(buf))
     }
 }
