@@ -1,56 +1,19 @@
-#[macro_use]
 extern crate gstreamer as gst;
 extern crate gstreamer_app as gst_app;
 
-use glib::translate::*;
-use gst::prelude::*;
-
 use gstreamer::prelude::*;
-use gstreamer::GstBinExt;
-use gstreamer_video as gst_video;
-use std::error::Error;
+
+mod meta;
 
 const ENCODE_PIPELINE: &str =
     "videotestsrc is-live=false num-buffers=100 ! rsstreamid stream_id=32323 ! appsink name=sink";
 
-pub struct NnmcBufferMeta(imp::NnmcBufferMeta);
-
-mod imp {
-    use gst::gst_sys;
-    #[repr(C)]
-    pub struct NnmcBufferMeta {
-        parent: gst_sys::GstMeta,
-        pub(super) stream_id: u32,
-    }
-
-    extern "C" {
-        pub fn nnmc_buffer_meta_get_type() -> glib::Type;
-    }
-}
-
-unsafe impl Send for NnmcBufferMeta {}
-unsafe impl Sync for NnmcBufferMeta {}
-
-impl NnmcBufferMeta {
-    pub fn get_stream_id(&self) -> u32 {
-        self.0.stream_id
-    }
-}
-
-unsafe impl MetaAPI for NnmcBufferMeta {
-    type GstType = imp::NnmcBufferMeta;
-
-    fn get_meta_api() -> glib::Type {
-        unsafe { imp::nnmc_buffer_meta_get_type() }
-    }
-}
-
-type GetMetaApiFn = unsafe fn() -> glib::Type;
-
-fn build_pipeline() -> Result<(gst::Pipeline, gst_app::AppSink), Box<Error>> {
+fn build_pipeline() -> Result<(gst::Pipeline, gst_app::AppSink), ()> {
     let pipeline = gst::Pipeline::new(None);
-    let elems = gst::parse_launch(ENCODE_PIPELINE)?;
-    pipeline.add(&elems)?;
+    let elems = gst::parse_launch(ENCODE_PIPELINE).expect("Could not build pipeline");
+    pipeline
+        .add(&elems)
+        .expect("Could not add elements to pipeline");
 
     let sink = pipeline
         .get_by_name("sink")
@@ -73,7 +36,7 @@ fn handle_new_sample(appsink: &gst_app::AppSink) -> Result<gst::FlowSuccess, gst
         );
         gst::FlowError::Error
     })?;
-    let msg = match buffer.get_meta::<NnmcBufferMeta>() {
+    let msg = match buffer.get_meta::<meta::NnmcBufferMeta>() {
         None => "No meta".to_string(),
         Some(meta) => format!("stream_id={}", meta.get_stream_id()),
     };
@@ -84,9 +47,6 @@ fn handle_new_sample(appsink: &gst_app::AppSink) -> Result<gst::FlowSuccess, gst
 
 pub fn main() {
     gst::init().unwrap();
-
-    let (major, minor, micro, nano) = gst::version();
-    println!("Using GStreamer v{}.{}.{}.{}", major, minor, micro, nano);
 
     let (pipeline, appsink) = build_pipeline().expect("Unable to construct pipeline");
     appsink.set_callbacks(
