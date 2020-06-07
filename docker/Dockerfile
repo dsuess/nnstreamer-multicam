@@ -1,4 +1,5 @@
-FROM ubuntu:18.04
+# Need 19.10 for gstreamer>=1.16
+FROM ubuntu:19.10
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,6 +15,7 @@ RUN apt-get update \
       gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
       gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
       gstreamer1.0-libav libgstrtspserver-1.0-dev libges-1.0-dev \
+    && apt-get install -y wget git  \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -25,18 +27,13 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/
 
 
-RUN ln -s /usr/lib/x86_64-linux-gnu/libtensorflow.so.1.15.2 /usr/lib/x86_64-linux-gnu/libtensorflow.so
+# RUN ln -s /usr/lib/x86_64-linux-gnu/libtensorflow.so.1.15.2 /usr/lib/x86_64-linux-gnu/libtensorflow.so
 
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.43.1
-
-# FIXME Move up
-RUN apt-get update \
-    && apt-get install -y wget git \
-    && rm -rf /var/lib/apt/lists/*
+    RUST_VERSION=1.44.0
 
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
