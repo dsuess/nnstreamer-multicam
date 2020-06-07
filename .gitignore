@@ -1,2 +1,5 @@
 /target
 Cargo.lock
+*.mp4
+*.pb
+data/coco_labels_list.txt
