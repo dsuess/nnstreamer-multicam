@@ -7,21 +7,17 @@
 docker-compose -f docker/docker-compose.dev.yml run nnstreamer-dev
 ```
 
-- build the GStreamer plugin
+- run the example
+
 ```
 cd /workspace
-cargo build
-```
-
-- run the example-app
-```
-cd /workspace/examples
 cargo run
 ```
 
 
 ## What's happening?
 
-- example-app sets up pipeline `videotestsrc | rsstreamid | appsink`
+- example-app sets up pipeline `videotestsrc | rsstreamid stream_id=??? | appsink`
 - the `rsstreamid` plugin attaches custom metadata to each buffer
+- value set through rsstreamid plugin settings
 - the metadata is read by the appsink and printed

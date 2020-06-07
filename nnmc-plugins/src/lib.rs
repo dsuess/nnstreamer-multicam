@@ -1,15 +1,11 @@
-#[macro_use]
 extern crate gstreamer as gst;
-
 use glib;
-use gstreamer_base as gst_base;
-use once_cell;
 
 pub mod meta;
-mod streamid;
+mod muxer;
 
 fn plugin_init(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {
-    streamid::register(plugin)?;
+    muxer::register(plugin)?;
     Ok(())
 }
 

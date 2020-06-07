@@ -12,10 +12,9 @@ use gstreamer_base::subclass::prelude::*;
 use gstreamer_video as gst_video;
 
 use once_cell::sync::Lazy;
-use std::i32;
 use std::sync::Mutex;
 
-use crate::meta::CustomMeta;
+use crate::meta::NnmcBufferMeta;
 
 static CAT: Lazy<gst::DebugCategory> = Lazy::new(|| {
     gst::DebugCategory::new(
@@ -52,6 +51,8 @@ static PROPERTIES: [subclass::Property; 1] = [subclass::Property("stream_id", |n
     )
 })];
 
+// Allow dead code, we're going to need this later
+#[allow(dead_code)]
 struct State {
     in_info: gst_video::VideoInfo,
     out_info: gst_video::VideoInfo,
@@ -199,8 +200,8 @@ impl BaseTransformImpl for StreamIdElement {
 
     fn transform_ip(
         &self,
-        element: &gst_base::BaseTransform,
-        buf: &mut gst::BufferRef,
+        _element: &gst_base::BaseTransform,
+        _buf: &mut gst::BufferRef,
     ) -> Result<gst::FlowSuccess, gst::FlowError> {
         Ok(gst::FlowSuccess::Ok)
     }
@@ -216,7 +217,8 @@ impl BaseTransformImpl for StreamIdElement {
         let mut buf = inbuf
             .copy_region(copy_flags, 0, None)
             .expect("Couldnt create copy of inbuffer");
-        CustomMeta::add(buf.get_mut().unwrap(), format!("Hello"));
+        let stream_id = self.settings.lock().unwrap().stream_id;
+        NnmcBufferMeta::add(buf.get_mut().unwrap(), stream_id);
         Ok(PrepareOutputBufferSuccess::Buffer(buf))
     }
 }

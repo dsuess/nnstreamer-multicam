@@ -13,35 +13,35 @@ use std::error::Error;
 const ENCODE_PIPELINE: &str =
     "videotestsrc is-live=false num-buffers=100 ! rsstreamid stream_id=32323 ! appsink name=sink";
 
-pub struct CustomMeta(imp::CustomMeta);
+pub struct NnmcBufferMeta(imp::NnmcBufferMeta);
 
 mod imp {
     use gst::gst_sys;
     #[repr(C)]
-    pub struct CustomMeta {
+    pub struct NnmcBufferMeta {
         parent: gst_sys::GstMeta,
-        pub(super) label: String,
+        pub(super) stream_id: u32,
     }
 
     extern "C" {
-        pub fn custom_meta_api_get_type() -> glib::Type;
+        pub fn nnmc_buffer_meta_get_type() -> glib::Type;
     }
 }
 
-unsafe impl Send for CustomMeta {}
-unsafe impl Sync for CustomMeta {}
+unsafe impl Send for NnmcBufferMeta {}
+unsafe impl Sync for NnmcBufferMeta {}
 
-impl CustomMeta {
-    pub fn get_label(&self) -> &str {
-        self.0.label.as_str()
+impl NnmcBufferMeta {
+    pub fn get_stream_id(&self) -> u32 {
+        self.0.stream_id
     }
 }
 
-unsafe impl MetaAPI for CustomMeta {
-    type GstType = imp::CustomMeta;
+unsafe impl MetaAPI for NnmcBufferMeta {
+    type GstType = imp::NnmcBufferMeta;
 
     fn get_meta_api() -> glib::Type {
-        unsafe { imp::custom_meta_api_get_type() }
+        unsafe { imp::nnmc_buffer_meta_get_type() }
     }
 }
 
@@ -73,9 +73,9 @@ fn handle_new_sample(appsink: &gst_app::AppSink) -> Result<gst::FlowSuccess, gst
         );
         gst::FlowError::Error
     })?;
-    let msg = match buffer.get_meta::<CustomMeta>() {
+    let msg = match buffer.get_meta::<NnmcBufferMeta>() {
         None => "No meta".to_string(),
-        Some(meta) => format!("{}", meta.get_label()),
+        Some(meta) => format!("stream_id={}", meta.get_stream_id()),
     };
     println!("{}", msg);
 
