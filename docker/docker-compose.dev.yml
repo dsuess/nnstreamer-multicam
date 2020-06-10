@@ -2,6 +2,7 @@ version: '3.3'
 services:
   nnstreamer-dev:
     image: nnstreamer-dev:latest
+    runtime: nvidia
     build:
       context: '..'
       dockerfile: 'docker/Dockerfile'

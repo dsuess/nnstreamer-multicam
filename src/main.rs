@@ -5,8 +5,11 @@ use gstreamer::prelude::*;
 
 mod meta;
 
-const ENCODE_PIPELINE: &str =
-    "videotestsrc is-live=false num-buffers=100 ! rsstreamid stream_id=32323 ! appsink name=sink";
+const ENCODE_PIPELINE: &str = "
+    nnstreammux name=mux ! appsink name=sink \
+    videotestsrc is-live=false num-buffers=100 pattern=solid-color foreground-color=255 ! mux.sink_0 \
+    videotestsrc is-live=false num-buffers=100 pattern=solid-color foreground-color=65025 ! mux.sink_1
+";
 
 fn build_pipeline() -> Result<(gst::Pipeline, gst_app::AppSink), ()> {
     let pipeline = gst::Pipeline::new(None);
